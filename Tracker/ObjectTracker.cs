@@ -75,7 +75,7 @@ namespace Tracker
 
             // 차원 복사
             Dims = dims;
-            for(int i = 0; i < channels.Length; ++i)
+            for (int i = 0; i < channels.Length; ++i)
             {
                 Channels[i] = channels[i];
                 HistSize[i] = histSize[i];
@@ -92,22 +92,24 @@ namespace Tracker
             Debug.Assert((initX >= 0 && initX <= (FindAreaWidth - CvtModelImage.Width))
                           && (initY >= 0 && initY <= (FindAreaHeight - CvtModelImage.Height)));
 
-            Mat backProjectMat = new Mat();
             Rect windowRect = new Rect();
-
-            windowRect.X = initX;
-            windowRect.Y = initY;
-            windowRect.Width = CvtModelImage.Width;
-            windowRect.Height = CvtModelImage.Height;
-
-            using (Mat cvtCurrentFrame = currentFrame.CvtColor(ColorConversionCodes.BGR2HSV))
+            using (Mat backProjectMat = new Mat())
             {
-                Cv2.CalcBackProject(new Mat[] { cvtCurrentFrame }, Channels, ModelHistogram, backProjectMat, ColorRanges);
-                Cv2.MeanShift(backProjectMat, ref windowRect, TermCriteria.Both(20, 1));
-                Cv2.Rectangle(currentFrame, windowRect, 255, 3);
+                windowRect.X = initX;
+                windowRect.Y = initY;
+                windowRect.Width = CvtModelImage.Width;
+                windowRect.Height = CvtModelImage.Height;
+
+                using (Mat cvtCurrentFrame = currentFrame.CvtColor(ColorConversionCodes.BGR2HSV))
+                {
+                    Cv2.CalcBackProject(new Mat[] { cvtCurrentFrame }, Channels, ModelHistogram, backProjectMat, ColorRanges);
+                    Cv2.MeanShift(backProjectMat, ref windowRect, TermCriteria.Both(20, 1));
+                    Cv2.Rectangle(currentFrame, windowRect, 255, 3);
+                    Console.WriteLine(Cv2.Mean(backProjectMat.SubMat(windowRect)));
+                }
             }
 
-            return new TrackResult(windowRect.X, windowRect.Y, backProjectMat.Clone());
+            return new TrackResult(windowRect.X, windowRect.Y, currentFrame.Clone());
         }
 
 

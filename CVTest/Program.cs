@@ -11,7 +11,7 @@ namespace CVTest
     class Program
     {
         public static Rangef[] colorRanges = { new Rangef(0, 180), new Rangef(0, 256) };
-        public static string roiName = "iphone.jpg";
+        public static string roiName = "pillow.jpg";
 
         static void Main(string[] args)
         {
@@ -19,7 +19,7 @@ namespace CVTest
             Mat modelImage = Cv2.ImRead(roiName);
 
             int[] channels = { 0, 1 };
-            int[] binSizes = { 30, 64 };
+            int[] binSizes = { 30, 32 };
             int dims = channels.Length;
 
 
