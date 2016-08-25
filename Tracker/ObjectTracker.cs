@@ -107,16 +107,16 @@ namespace Tracker
                 Cv2.Rectangle(currentFrame, windowRect, 255, 3);
             }
 
-            return new TrackResult(windowRect.X, windowRect.Y, currentFrame);
+            return new TrackResult(windowRect.X, windowRect.Y, backProjectMat.Clone());
         }
 
 
-        public class TrackResult
+        public class TrackResult : IDisposable
         {
-            public int X { get; private set; } 
+            public int X { get; private set; }
             public int Y { get; private set; }
-            public Mat Frame { get; }
-
+            public int CenterY { get; }
+            public Mat Frame { get; private set; }
             public TrackResult(int x, int y, Mat frame)
             {
                 Debug.Assert(x >= 0 && y >= 0 && frame != null);
@@ -124,7 +124,31 @@ namespace Tracker
                 Y = y;
                 Frame = frame.Clone();
             }
+
+            public void Dispose()
+            {
+                ResetAllResources();
+                GC.SuppressFinalize(this);
+                IsDisposed = true;
+            }
+
+            private void ResetAllResources()
+            {
+                Frame?.Release();
+                Frame = null;
+                X = 0;
+                Y = 0;
+            }
+
+            ~TrackResult()
+            {
+                if (IsDisposed == false)
+                {
+                    ResetAllResources();
+                }
+            }
+            private bool IsDisposed { get; set; } = false;
         }
-        
+
     }
 }
