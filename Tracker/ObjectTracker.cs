@@ -84,34 +84,75 @@ namespace Tracker
 
             IsModelHistogramReady = true;
         }
-        public TrackResult TrackUsing(Mat currentFrame, int initX, int initY)
+        public TrackResult TrackUsing(Mat currentFrame, int nThread)
         {
             Debug.Assert(IsTrackingReady == true);
             Debug.Assert(currentFrame != null && currentFrame.IsDisposed == false);
             Debug.Assert(Channels != null && Dims > 0 && HistSize != null && ColorRanges != null);
-            Debug.Assert((initX >= 0 && initX <= (FindAreaWidth - CvtModelImage.Width))
-                          && (initY >= 0 && initY <= (FindAreaHeight - CvtModelImage.Height)));
+            Debug.Assert(nThread >= 1);
+            
+            // 트랙킹 결과
+            TrackResult result = null;
+            Random randomGenerator = new Random();
 
-            Rect windowRect = new Rect();
+            // nThread 수만 큼 윈도우 생성, (병렬로 mean shift를 돌리기 위함)
+            Rect[] meanShiftRects = new Rect[nThread];
+            GenerateRandomRects(randomGenerator, meanShiftRects);
+
             using (Mat backProjectMat = new Mat())
             {
-                windowRect.X = initX;
-                windowRect.Y = initY;
-                windowRect.Width = CvtModelImage.Width;
-                windowRect.Height = CvtModelImage.Height;
-
+                // 백프로젝션 하기
                 using (Mat cvtCurrentFrame = currentFrame.CvtColor(ColorConversionCodes.BGR2HSV))
                 {
                     Cv2.CalcBackProject(new Mat[] { cvtCurrentFrame }, Channels, ModelHistogram, backProjectMat, ColorRanges);
-                    Cv2.MeanShift(backProjectMat, ref windowRect, TermCriteria.Both(20, 1));
-                    Cv2.Rectangle(currentFrame, windowRect, 255, 3);
-                    Console.WriteLine(Cv2.Mean(backProjectMat.SubMat(windowRect)));
                 }
+
+                // 병렬로 mean shift 
+                var resultRect = ParallelMeanShift(currentFrame, meanShiftRects, backProjectMat);
+                Cv2.Rectangle(currentFrame, resultRect, new Scalar(255, 255, 0), 3);
+
+                result = new TrackResult(resultRect.X, resultRect.Y, currentFrame);
             }
 
-            return new TrackResult(windowRect.X, windowRect.Y, currentFrame.Clone());
+            return result;
         }
 
+        private Rect ParallelMeanShift(Mat currentFrame, Rect[] rects, Mat backProjectMat)
+        {
+            Rect result;
+            double[] similarityArray = new double[rects.Length];
+
+            // nThread(rect의 갯수)만큼 Parallel하게 mean shift 수행
+            Parallel.For(0, rects.Length, (index) =>
+            {
+                Cv2.MeanShift(backProjectMat, ref rects[index], TermCriteria.Both(30, 1));
+                similarityArray[index] = Cv2.Mean(backProjectMat[rects[index]]).Val0;
+
+                lock (currentFrame)
+                {
+                    Cv2.Rectangle(currentFrame, rects[index], 255, 3);
+                }
+
+                Console.WriteLine(Cv2.Mean(backProjectMat.SubMat(rects[index])));
+            });
+
+            var meanMaxIndex = Array.IndexOf(similarityArray, similarityArray.Max());
+            Console.WriteLine("max Index = {0}", meanMaxIndex);
+
+            return rects[meanMaxIndex];
+        }
+
+        private void GenerateRandomRects(Random randomGenerator, Rect[] rects)
+        {
+            for (int index = 0; index < rects.Length; ++index)
+            {
+                // 각 rect별로 랜덤하게 포인트를 잡는다.
+                rects[index].X = randomGenerator.Next() % (640 - CvtModelImage.Width);
+                rects[index].Y = randomGenerator.Next() % (480 - CvtModelImage.Height);
+                rects[index].Width = CvtModelImage.Width;
+                rects[index].Height = CvtModelImage.Height;
+            }
+        }
 
         public class TrackResult : IDisposable
         {

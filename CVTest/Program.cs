@@ -15,6 +15,12 @@ namespace CVTest
 
         static void Main(string[] args)
         {
+            StopFrameTest();
+
+        }
+
+        private static void TrackerExample()
+        {
             ObjectTracker tracker = ObjectTracker.Instance;
             Mat modelImage = Cv2.ImRead(roiName);
 
@@ -42,15 +48,16 @@ namespace CVTest
                         break;
                     }
 
-                    var result = tracker.TrackUsing(eachFrame, meanShiftRect.X, meanShiftRect.Y);
+                    //var result = tracker.TrackUsing(eachFrame, meanShiftRect.X, meanShiftRect.Y);
 
-                    screen.ShowImage(result.Frame);
-                    meanShiftRect.X = result.X;
-                    meanShiftRect.Y = result.Y;
+                    screen.ShowImage(eachFrame);
+                    //meanShiftRect.X = result.X;
+                    //meanShiftRect.Y = result.Y;
 
                     var key = Cv2.WaitKey(100);
                     if (key == 27)
                     {
+                        Cv2.ImWrite("scan.jpg", eachFrame);
                         break;
                     }
                 }
@@ -121,6 +128,24 @@ namespace CVTest
             Cv2.CalcBackProject(new Mat[] { hsvFrame }, new int[] { 0, 1 }, hsvRoiHist, backProjectMat, colorRanges);
             Cv2.ImShow("backproject image", backProjectMat);
             Cv2.WaitKey(0);
+        }
+
+        private static void StopFrameTest()
+        {
+            ObjectTracker tracker = ObjectTracker.Instance;
+            Mat modelImage = Cv2.ImRead("target.jpg");
+            Mat scanImage = Cv2.ImRead("scan.jpg");
+            int[] channels = { 0, 1 };
+            int[] binSizes = { 30, 32 };
+            int dims = channels.Length;
+
+            tracker.SetEntireArea(640, 480);
+            tracker.SetModelImageAndMakeHistogram(modelImage, channels, dims, binSizes, colorRanges);
+            var result = tracker.TrackUsing(scanImage, 20);
+
+            Cv2.ImShow("result", result.Frame);
+            Cv2.WaitKey(0);
+
         }
     }
 }
