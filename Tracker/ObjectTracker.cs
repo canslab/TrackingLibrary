@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using OpenCvSharp;
 using System.Diagnostics;
+using System.Collections.Concurrent;
 
 namespace Tracker
 {
@@ -84,20 +85,27 @@ namespace Tracker
 
             IsModelHistogramReady = true;
         }
-        public TrackResult TrackUsing(Mat currentFrame, int nThread)
+        public TrackResult TrackUsing(Mat currentFrame, int nThread, int hintX, int hintY)
         {
             Debug.Assert(IsTrackingReady == true);
             Debug.Assert(currentFrame != null && currentFrame.IsDisposed == false);
             Debug.Assert(Channels != null && Dims > 0 && HistSize != null && ColorRanges != null);
             Debug.Assert(nThread >= 1);
-            
+
             // 트랙킹 결과
             TrackResult result = null;
             Random randomGenerator = new Random();
 
             // nThread 수만 큼 윈도우 생성, (병렬로 mean shift를 돌리기 위함)
             Rect[] meanShiftRects = new Rect[nThread];
-            GenerateRandomRects(randomGenerator, meanShiftRects);
+
+            // 유저에게 입력받은 힌트는 후보군에 하나 넣어둔다.
+            meanShiftRects[0].X = hintX;
+            meanShiftRects[0].Y = hintY;
+            meanShiftRects[0].Width = CvtModelImage.Width;
+            meanShiftRects[0].Height = CvtModelImage.Height;
+
+            GenerateRandomRects(randomGenerator, meanShiftRects, 1);
 
             using (Mat backProjectMat = new Mat())
             {
@@ -119,32 +127,40 @@ namespace Tracker
 
         private Rect ParallelMeanShift(Mat currentFrame, Rect[] rects, Mat backProjectMat)
         {
-            Rect result;
-            double[] similarityArray = new double[rects.Length];
+            ConcurrentDictionary<int, double> similarityDic = new ConcurrentDictionary<int, double>(); 
 
             // nThread(rect의 갯수)만큼 Parallel하게 mean shift 수행
             Parallel.For(0, rects.Length, (index) =>
             {
                 Cv2.MeanShift(backProjectMat, ref rects[index], TermCriteria.Both(30, 1));
-                similarityArray[index] = Cv2.Mean(backProjectMat[rects[index]]).Val0;
-
+                similarityDic[index] = Cv2.Mean(backProjectMat[rects[index]]).Val0;
+#if SHOW_LOG
                 lock (currentFrame)
                 {
                     Cv2.Rectangle(currentFrame, rects[index], 255, 3);
                 }
-
                 Console.WriteLine(Cv2.Mean(backProjectMat.SubMat(rects[index])));
+#endif
             });
 
-            var meanMaxIndex = Array.IndexOf(similarityArray, similarityArray.Max());
-            Console.WriteLine("max Index = {0}", meanMaxIndex);
+            // get top 5! 
+            var sortedKeys = (from number in similarityDic.Keys
+                              orderby similarityDic[number] descending
+                              select number).ToArray();
 
-            return rects[meanMaxIndex];
+#if SHOW_LOG
+            for(int i = 0; i <= rects.Length / 5; ++i)
+            {
+                Console.Write(similarityDic[sortedKeys[i]]+" ");
+            }
+            Console.WriteLine("\n--------------");
+#endif
+            return rects[sortedKeys[0]];
         }
 
-        private void GenerateRandomRects(Random randomGenerator, Rect[] rects)
+        private void GenerateRandomRects(Random randomGenerator, Rect[] rects, int from)
         {
-            for (int index = 0; index < rects.Length; ++index)
+            for (int index = from; index < rects.Length; ++index)
             {
                 // 각 rect별로 랜덤하게 포인트를 잡는다.
                 rects[index].X = randomGenerator.Next() % (640 - CvtModelImage.Width);

@@ -11,12 +11,12 @@ namespace CVTest
     class Program
     {
         public static Rangef[] colorRanges = { new Rangef(0, 180), new Rangef(0, 256) };
-        public static string roiName = "pillow.jpg";
+        public static string roiName = "book1.jpg";
 
         static void Main(string[] args)
         {
-            StopFrameTest();
-
+            //StopFrameTest();
+            TrackerExample();
         }
 
         private static void TrackerExample()
@@ -48,11 +48,11 @@ namespace CVTest
                         break;
                     }
 
-                    //var result = tracker.TrackUsing(eachFrame, meanShiftRect.X, meanShiftRect.Y);
+                    var trackResult = tracker.TrackUsing(eachFrame, 40, meanShiftRect.X, meanShiftRect.Y);
+                    meanShiftRect.X = trackResult.X;
+                    meanShiftRect.Y = trackResult.Y;
 
-                    screen.ShowImage(eachFrame);
-                    //meanShiftRect.X = result.X;
-                    //meanShiftRect.Y = result.Y;
+                    screen.ShowImage(trackResult.Frame);
 
                     var key = Cv2.WaitKey(100);
                     if (key == 27)
@@ -141,7 +141,7 @@ namespace CVTest
 
             tracker.SetEntireArea(640, 480);
             tracker.SetModelImageAndMakeHistogram(modelImage, channels, dims, binSizes, colorRanges);
-            var result = tracker.TrackUsing(scanImage, 20);
+            var result = tracker.TrackUsing(scanImage, 20, 320,240);
 
             Cv2.ImShow("result", result.Frame);
             Cv2.WaitKey(0);
