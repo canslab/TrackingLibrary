@@ -18,8 +18,13 @@ namespace CVTest
             ObjectTracker tracker = ObjectTracker.Instance;
             Mat modelImage = Cv2.ImRead(roiName);
 
+            int[] channels = { 0, 1 };
+            int[] binSizes = { 30, 64 };
+            int dims = channels.Length;
+
+
             tracker.SetEntireArea(640, 480);
-            tracker.SetModelImageAndMakeHistogram(modelImage, new int[] { 0, 1 }, 2, new int[] { 180, 256 }, colorRanges);
+            tracker.SetModelImageAndMakeHistogram(modelImage, channels, dims, binSizes, colorRanges);
 
             VideoCapture streamer = new VideoCapture(0);
             Rect meanShiftRect = new Rect();
