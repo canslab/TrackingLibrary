@@ -25,12 +25,12 @@ namespace CVTest
             ObjectTracker tracker = ObjectTracker.Instance;
             Mat modelImage = Cv2.ImRead(roiName);
 
-            int[] channels = { 0 };
-            int[] binSizes = { 30 };
+            int[] channels = { 0, 1 };
+            int[] binSizes = { 30, 32 };
             int dims = channels.Length;
 
             tracker.SetEntireArea(640, 480);
-            tracker.SetModelImageAndMakeHistogram(modelImage, channels, dims, binSizes, hColorRanges);
+            tracker.SetModelImage(modelImage, channels, dims, binSizes, hsColorRanges);
 
             VideoCapture streamer = new VideoCapture(0);
             Rect meanShiftRect = new Rect();
@@ -48,7 +48,7 @@ namespace CVTest
                         break;
                     }
 
-                    var trackResult = tracker.TrackUsing(eachFrame, 40, meanShiftRect.X, meanShiftRect.Y);
+                    var trackResult = tracker.TrackUsing(eachFrame, 20, meanShiftRect.X, meanShiftRect.Y);
                     meanShiftRect.X = trackResult.X;
                     meanShiftRect.Y = trackResult.Y;
 
@@ -140,7 +140,7 @@ namespace CVTest
             int dims = channels.Length;
 
             tracker.SetEntireArea(640, 480);
-            tracker.SetModelImageAndMakeHistogram(modelImage, channels, dims, binSizes, hsColorRanges);
+            tracker.SetModelImage(modelImage, channels, dims, binSizes, hsColorRanges);
             var result = tracker.TrackUsing(scanImage, 20, 320,240);
 
             Cv2.ImShow("result", result.Frame);

@@ -11,25 +11,22 @@ namespace Tracker
 {
     public class ObjectTracker
     {
-        // static variables 
+        // User에게 제공해주는 Rangef[] 상수들 
         public static readonly Rangef[] HueSatColorRanges = { new Rangef(0, 180), new Rangef(0, 256) };
-        public static ObjectTracker Instance { get; }
+        public static readonly Rangef[] HueColorRanges = { new Rangef(0, 180) };
 
-        public Point mInitialLocation = new Point(0, 0);
+        /// <summary>
+        /// 싱글턴 객체를 얻어온다.
+        /// </summary>
+        public static ObjectTracker Instance { get; }
 
         public int FindAreaWidth { get; private set; }
         public int FindAreaHeight { get; private set; }
 
-        public Mat CvtModelImage { get; private set; } = null;
-        public Mat ModelHistogram { get; private set; } = null;
-        private bool IsFindAreaSettingDone { get; set; } = false;
-        private bool IsModelHistogramReady { get; set; } = false;
-
-        public int[] Channels { get; private set; } = null;
-        public int Dims { get; private set; } = 0;
-        public int[] HistSize { get; private set; } = null;
-        public Rangef[] ColorRanges { get; private set; } = null;
-
+        public Mat CvtModelImage { get; private set; }
+        public Mat ModelHistogram { get; private set; }
+        private bool IsFindAreaSettingDone { get; set; }
+        private bool IsModelHistogramReady { get; set; }
         public bool IsTrackingReady
         {
             get
@@ -37,6 +34,12 @@ namespace Tracker
                 return (IsFindAreaSettingDone && IsModelHistogramReady);
             }
         }
+
+        public int[] Channels { get; private set; }
+        public int Dims { get; private set; }
+        public int[] HistSize { get; private set; }
+        public Rangef[] ColorRanges { get; private set; }
+
         static ObjectTracker()
         {
 #if SHOW_LOG
@@ -44,6 +47,17 @@ namespace Tracker
 #endif
             Instance = new ObjectTracker();
         }
+
+        private ObjectTracker()
+        {
+            InitPropertiesAndVariables();
+        }
+
+        /// <summary>
+        /// 프레임의 크기.
+        /// </summary>
+        /// <param name="width"> 프레임 너비 </param>
+        /// <param name="height"> 프레임 높이 </param>
         public void SetEntireArea(int width, int height)
         {
             Debug.Assert(width > 0 && height > 0);
@@ -53,7 +67,15 @@ namespace Tracker
             IsFindAreaSettingDone = true;
         }
 
-        public void SetModelImageAndMakeHistogram(Mat modelImage, int[] channels, int dims, int[] histSize, Rangef[] colorRanges)
+        /// <summary>
+        /// 모델 이미지에 대한 히스토그램을 만들어서 내부에 저장해둔다.
+        /// </summary>
+        /// <param name="modelImage"> 모델 이미지 </param>
+        /// <param name="channels"> 채널 수 </param>
+        /// <param name="dims"> 차원 수 </param>
+        /// <param name="histSize"> 히스토그램 사이즈 </param>
+        /// <param name="colorRanges"> 컬러 범위 </param>
+        public void SetModelImage(Mat modelImage, int[] channels, int dims, int[] histSize, Rangef[] colorRanges)
         {
             Debug.Assert(modelImage != null && modelImage.IsDisposed == false);
             Debug.Assert(channels != null && channels.Length <= 3 && dims <= 3);
@@ -85,6 +107,16 @@ namespace Tracker
 
             IsModelHistogramReady = true;
         }
+
+        /// <summary>
+        /// currentFrame을 가지고서 Tracking을 한다, 그 결과 TrackResult를 반환한다.
+        /// 그 결과를 사용한 뒤 Dispose하는것은 Caller의 책임이다.
+        /// </summary>
+        /// <param name="currentFrame"> 현재 프레임 </param>
+        /// <param name="nThread"> 병렬성의 정도, 높을 수록 부하가 높으나, 트랙킹 결과는 좋아짐.</param>
+        /// <param name="hintX"> 힌트가 되는 초기 x좌표 </param>
+        /// <param name="hintY"> 힌트가 되는 초기 y좌표 </param>
+        /// <returns></returns>
         public TrackResult TrackUsing(Mat currentFrame, int nThread, int hintX, int hintY)
         {
             Debug.Assert(IsTrackingReady == true);
@@ -119,10 +151,36 @@ namespace Tracker
                 var resultRect = ParallelMeanShift(currentFrame, meanShiftRects, backProjectMat);
                 Cv2.Rectangle(currentFrame, resultRect, new Scalar(255, 255, 0), 3);
 
-                result = new TrackResult(resultRect.X, resultRect.Y, currentFrame);
+                result = new TrackResult(resultRect.X, resultRect.Y, backProjectMat.Clone());
             }
 
             return result;
+        }
+
+        public void ResetTrackerAndRelease()
+        {
+            InitPropertiesAndVariables();
+        }
+
+        private void InitPropertiesAndVariables()
+        {
+            // 이미지들 release
+            CvtModelImage?.Release();
+            ModelHistogram?.Release();
+
+            FindAreaHeight = 0;
+            FindAreaWidth = 0;
+
+            Channels = null;
+            Dims = 0;
+            HistSize = null;
+            ColorRanges = null;
+
+            IsFindAreaSettingDone = false;
+            IsModelHistogramReady = false;
+
+            CvtModelImage = null;
+            ModelHistogram = null;
         }
 
         private Rect ParallelMeanShift(Mat currentFrame, Rect[] rects, Mat backProjectMat)

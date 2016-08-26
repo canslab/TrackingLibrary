@@ -20,3 +20,25 @@ c:\Users\jhpar\documents\visual studio 2015\Projects\CVTest\Tracker\bin\Debug\Op
 c:\Users\jhpar\documents\visual studio 2015\Projects\CVTest\Tracker\bin\Debug\OpenCvSharp.Extensions.xml
 c:\Users\jhpar\documents\visual studio 2015\Projects\CVTest\Tracker\obj\Debug\Tracker.dll
 c:\Users\jhpar\documents\visual studio 2015\Projects\CVTest\Tracker\obj\Debug\Tracker.pdb
+C:\Users\jhpar\Source\Repos\TrackingLibrary\Tracker\obj\Debug\Tracker.csprojResolveAssemblyReference.cache
+C:\Users\jhpar\Source\Repos\TrackingLibrary\Tracker\bin\Debug\dll\x86\OpenCvSharpExtern.dll
+C:\Users\jhpar\Source\Repos\TrackingLibrary\Tracker\bin\Debug\dll\x86\msvcp120.dll
+C:\Users\jhpar\Source\Repos\TrackingLibrary\Tracker\bin\Debug\dll\x86\msvcr120.dll
+C:\Users\jhpar\Source\Repos\TrackingLibrary\Tracker\bin\Debug\dll\x86\opencv_world310.dll
+C:\Users\jhpar\Source\Repos\TrackingLibrary\Tracker\bin\Debug\dll\x86\opencv_ffmpeg310.dll
+C:\Users\jhpar\Source\Repos\TrackingLibrary\Tracker\bin\Debug\dll\x64\OpenCvSharpExtern.dll
+C:\Users\jhpar\Source\Repos\TrackingLibrary\Tracker\bin\Debug\dll\x64\msvcp120.dll
+C:\Users\jhpar\Source\Repos\TrackingLibrary\Tracker\bin\Debug\dll\x64\msvcr120.dll
+C:\Users\jhpar\Source\Repos\TrackingLibrary\Tracker\bin\Debug\dll\x64\opencv_world310.dll
+C:\Users\jhpar\Source\Repos\TrackingLibrary\Tracker\bin\Debug\dll\x64\opencv_ffmpeg310_64.dll
+C:\Users\jhpar\Source\Repos\TrackingLibrary\Tracker\bin\Debug\Tracker.dll
+C:\Users\jhpar\Source\Repos\TrackingLibrary\Tracker\bin\Debug\Tracker.pdb
+C:\Users\jhpar\Source\Repos\TrackingLibrary\Tracker\bin\Debug\OpenCvSharp.Blob.dll
+C:\Users\jhpar\Source\Repos\TrackingLibrary\Tracker\bin\Debug\OpenCvSharp.dll
+C:\Users\jhpar\Source\Repos\TrackingLibrary\Tracker\bin\Debug\OpenCvSharp.Extensions.dll
+C:\Users\jhpar\Source\Repos\TrackingLibrary\Tracker\bin\Debug\OpenCvSharp.UserInterface.dll
+C:\Users\jhpar\Source\Repos\TrackingLibrary\Tracker\bin\Debug\OpenCvSharp.xml
+C:\Users\jhpar\Source\Repos\TrackingLibrary\Tracker\bin\Debug\OpenCvSharp.Blob.xml
+C:\Users\jhpar\Source\Repos\TrackingLibrary\Tracker\bin\Debug\OpenCvSharp.Extensions.xml
+C:\Users\jhpar\Source\Repos\TrackingLibrary\Tracker\obj\Debug\Tracker.dll
+C:\Users\jhpar\Source\Repos\TrackingLibrary\Tracker\obj\Debug\Tracker.pdb

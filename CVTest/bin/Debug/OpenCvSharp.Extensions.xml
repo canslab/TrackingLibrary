@@ -11,15 +11,6 @@
         </member>
         <member name="M:OpenCvSharp.Extensions.Binarizer.Niblack(OpenCvSharp.Mat,OpenCvSharp.Mat,System.Int32,System.Double)">
             <summary>
-            Binarizes by Niblack's method
-            </summary>
-            <param name="src">Input image</param>
-            <param name="dst">Output image</param>
-            <param name="kernelSize">Window size</param>
-            <param name="k">Adequate coefficient</param>
-        </member>
-        <member name="M:OpenCvSharp.Extensions.Binarizer.NiblackFast(OpenCvSharp.Mat,OpenCvSharp.Mat,System.Int32,System.Double)">
-            <summary>
             Binarizes by Niblack's method (This is faster but memory-hogging)
             </summary>
             <param name="src">Input image</param>
@@ -28,16 +19,6 @@
             <param name="k">Adequate coefficient</param>
         </member>
         <member name="M:OpenCvSharp.Extensions.Binarizer.Sauvola(OpenCvSharp.Mat,OpenCvSharp.Mat,System.Int32,System.Double,System.Double)">
-            <summary>
-            Binarizes by Sauvola's method
-            </summary>
-            <param name="src">Input image</param>
-            <param name="dst">Output image</param>
-            <param name="kernelSize">Window size</param>
-            <param name="k">Adequate coefficient</param>
-            <param name="r">Adequate coefficient</param>
-        </member>
-        <member name="M:OpenCvSharp.Extensions.Binarizer.SauvolaFast(OpenCvSharp.Mat,OpenCvSharp.Mat,System.Int32,System.Double,System.Double)">
             <summary>
             Binarizes by Sauvola's method (This is faster but memory-hogging)
             </summary>
@@ -65,17 +46,6 @@
             <param name="dst">Output image</param>
             <param name="kernelSize">Window size</param>
             <param name="k">Adequate coefficient</param>
-        </member>
-        <member name="M:OpenCvSharp.Extensions.Binarizer.MeanStddev(OpenCvSharp.Mat,System.Int32,System.Int32,System.Int32,System.Double@,System.Double@)">
-            <summary>
-            注目画素の周辺画素の平均値と標準偏差を求める
-            </summary>
-            <param name="img">画像の画素データ</param>
-            <param name="x">x座標</param>
-            <param name="y">y座標</param>
-            <param name="size">周辺画素の探索サイズ。奇数でなければならない</param>
-            <param name="mean">出力される平均</param>
-            <param name="stddev">出力される標準偏差</param>
         </member>
         <member name="M:OpenCvSharp.Extensions.Binarizer.MinMax(OpenCvSharp.Mat,System.Int32,System.Int32,System.Int32,System.Byte@,System.Byte@)">
             <summary>

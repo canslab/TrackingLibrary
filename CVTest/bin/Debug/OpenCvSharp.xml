@@ -1377,7 +1377,7 @@
             <param name="flags">Different flags that may be zero or a combination of the CalibrationFlag values</param>
             <returns></returns>
         </member>
-        <member name="M:OpenCvSharp.Cv2.StereoCalibrate(System.Collections.Generic.IEnumerable{System.Collections.Generic.IEnumerable{OpenCvSharp.Point3d}},System.Collections.Generic.IEnumerable{System.Collections.Generic.IEnumerable{OpenCvSharp.Point2d}},System.Collections.Generic.IEnumerable{System.Collections.Generic.IEnumerable{OpenCvSharp.Point2d}},System.Double[0:,0:],System.Double[],System.Double[0:,0:],System.Double[],OpenCvSharp.Size,OpenCvSharp.OutputArray,OpenCvSharp.OutputArray,OpenCvSharp.OutputArray,OpenCvSharp.OutputArray,OpenCvSharp.CalibrationFlags,System.Nullable{OpenCvSharp.TermCriteria})">
+        <member name="M:OpenCvSharp.Cv2.StereoCalibrate(System.Collections.Generic.IEnumerable{System.Collections.Generic.IEnumerable{OpenCvSharp.Point3f}},System.Collections.Generic.IEnumerable{System.Collections.Generic.IEnumerable{OpenCvSharp.Point2f}},System.Collections.Generic.IEnumerable{System.Collections.Generic.IEnumerable{OpenCvSharp.Point2f}},System.Double[0:,0:],System.Double[],System.Double[0:,0:],System.Double[],OpenCvSharp.Size,OpenCvSharp.OutputArray,OpenCvSharp.OutputArray,OpenCvSharp.OutputArray,OpenCvSharp.OutputArray,OpenCvSharp.CalibrationFlags,System.Nullable{OpenCvSharp.TermCriteria})">
             <summary>
             finds intrinsic and extrinsic parameters of a stereo camera
             </summary>
