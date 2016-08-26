@@ -10,8 +10,9 @@ namespace CVTest
 {
     class Program
     {
-        public static Rangef[] colorRanges = { new Rangef(0, 180), new Rangef(0, 256) };
-        public static string roiName = "book1.jpg";
+        public static Rangef[] hsColorRanges = { new Rangef(0, 180), new Rangef(0, 256) };
+        public static Rangef[] hColorRanges = { new Rangef(0, 180) };
+        public static string roiName = "iphone.jpg";
 
         static void Main(string[] args)
         {
@@ -24,13 +25,12 @@ namespace CVTest
             ObjectTracker tracker = ObjectTracker.Instance;
             Mat modelImage = Cv2.ImRead(roiName);
 
-            int[] channels = { 0, 1 };
-            int[] binSizes = { 30, 32 };
+            int[] channels = { 0 };
+            int[] binSizes = { 30 };
             int dims = channels.Length;
 
-
             tracker.SetEntireArea(640, 480);
-            tracker.SetModelImageAndMakeHistogram(modelImage, channels, dims, binSizes, colorRanges);
+            tracker.SetModelImageAndMakeHistogram(modelImage, channels, dims, binSizes, hColorRanges);
 
             VideoCapture streamer = new VideoCapture(0);
             Rect meanShiftRect = new Rect();
@@ -76,7 +76,7 @@ namespace CVTest
             using (Mat eachFrame = new Mat()) // Frame image buffer
             {
                 // 모델히스토그램 만들기
-                Cv2.CalcHist(new Mat[] { hsvRoiMat }, new int[] { 0, 1 }, null, hsvRoiMatHisto, 2, new int[] { 180, 256 }, colorRanges);
+                Cv2.CalcHist(new Mat[] { hsvRoiMat }, new int[] { 0, 1 }, null, hsvRoiMatHisto, 2, new int[] { 180, 256 }, hsColorRanges);
                 Cv2.Normalize(hsvRoiMatHisto, hsvRoiMatHisto, 0, 255, NormTypes.MinMax);
                 Rect windowRect = new Rect(100, 100, roiMat.Width, roiMat.Height);
 
@@ -90,7 +90,7 @@ namespace CVTest
 
                     using (Mat eachHSVFrame = eachFrame.CvtColor(ColorConversionCodes.BGR2HSV))
                     {
-                        Cv2.CalcBackProject(new Mat[] { eachHSVFrame }, new int[] { 0, 1 }, hsvRoiMatHisto, backProjectMat, colorRanges);
+                        Cv2.CalcBackProject(new Mat[] { eachHSVFrame }, new int[] { 0, 1 }, hsvRoiMatHisto, backProjectMat, hsColorRanges);
                     }
 
                     Cv2.MeanShift(backProjectMat, ref windowRect, TermCriteria.Both(20, 1));
@@ -120,12 +120,12 @@ namespace CVTest
             var hsvRoiHist = new Mat();
 
 
-            Cv2.CalcHist(new Mat[] { hsvRoi }, new int[] { 0, 1 }, null, hsvRoiHist, 2, new int[] { 180, 256 }, colorRanges);
+            Cv2.CalcHist(new Mat[] { hsvRoi }, new int[] { 0, 1 }, null, hsvRoiHist, 2, new int[] { 180, 256 }, hsColorRanges);
             Cv2.Normalize(hsvRoiHist, hsvRoiHist, 0, 255, NormTypes.MinMax);
 
             var backProjectMat = new Mat();
 
-            Cv2.CalcBackProject(new Mat[] { hsvFrame }, new int[] { 0, 1 }, hsvRoiHist, backProjectMat, colorRanges);
+            Cv2.CalcBackProject(new Mat[] { hsvFrame }, new int[] { 0, 1 }, hsvRoiHist, backProjectMat, hsColorRanges);
             Cv2.ImShow("backproject image", backProjectMat);
             Cv2.WaitKey(0);
         }
@@ -140,7 +140,7 @@ namespace CVTest
             int dims = channels.Length;
 
             tracker.SetEntireArea(640, 480);
-            tracker.SetModelImageAndMakeHistogram(modelImage, channels, dims, binSizes, colorRanges);
+            tracker.SetModelImageAndMakeHistogram(modelImage, channels, dims, binSizes, hsColorRanges);
             var result = tracker.TrackUsing(scanImage, 20, 320,240);
 
             Cv2.ImShow("result", result.Frame);
