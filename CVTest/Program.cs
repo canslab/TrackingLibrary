@@ -11,7 +11,7 @@ namespace CVTest
     class Program
     {
         public static Rangef[] colorRanges = { new Rangef(0, 180), new Rangef(0, 256) };
-        public static string roiName = "pillow.jpg";
+        public static string roiName = "iphone.jpg";
 
         static void Main(string[] args)
         {
