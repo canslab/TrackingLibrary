@@ -124,19 +124,19 @@ namespace Tracker
             Debug.Assert(nThread >= 1);
 
             // 트랙킹 결과
-            TrackResult result = null;
+            TrackResult retResult = null;
             Random randomGenerator = new Random();
 
             // nThread 수만 큼 윈도우 생성, (병렬로 mean shift를 돌리기 위함)
-            Rect[] meanShiftRects = new Rect[nThread];
+            Rect[] candidateRects = new Rect[nThread];
 
             // 유저에게 입력받은 힌트는 후보군에 하나 넣어둔다.
-            meanShiftRects[0].X = hintX;
-            meanShiftRects[0].Y = hintY;
-            meanShiftRects[0].Width = CvtModelImage.Width;
-            meanShiftRects[0].Height = CvtModelImage.Height;
+            candidateRects[0].X = hintX;
+            candidateRects[0].Y = hintY;
+            candidateRects[0].Width = CvtModelImage.Width;
+            candidateRects[0].Height = CvtModelImage.Height;
 
-            GenerateRandomRects(randomGenerator, meanShiftRects, 1);
+            GenerateRandomRects(randomGenerator, candidateRects, 1);
 
             using (Mat backProjectMat = new Mat())
             {
@@ -147,13 +147,11 @@ namespace Tracker
                 }
 
                 // 병렬로 mean shift 
-                var resultRect = ParallelMeanShift(currentFrame, meanShiftRects, backProjectMat);
-                Cv2.Rectangle(currentFrame, resultRect, new Scalar(255, 255, 0), 3);
-
-                result = new TrackResult(resultRect.X, resultRect.Y, currentFrame);
+                retResult = ParallelMeanShift(currentFrame, candidateRects, backProjectMat);
+                Cv2.Rectangle(currentFrame, new Rect(retResult.X, retResult.Y, retResult.Width, retResult.Height), new Scalar(255, 255, 0), 3);
             }
 
-            return result;
+            return retResult;
         }
 
         /// <summary>
@@ -185,10 +183,10 @@ namespace Tracker
             ModelHistogram = null;
         }
 
-        private Rect ParallelMeanShift(Mat currentFrame, Rect[] candidateRects, Mat backProjectMat)
+        private TrackResult ParallelMeanShift(Mat currentFrame, Rect[] candidateRects, Mat backProjectMat)
         {
             ConcurrentDictionary<int, double> similarityDic = new ConcurrentDictionary<int, double>();
-            Rect retRect;
+            TrackResult retResult = null;
 
             // nThread(rect의 갯수)만큼 Parallel하게 mean shift 수행
             Parallel.For(0, candidateRects.Length, (index) =>
@@ -214,19 +212,18 @@ namespace Tracker
             var smallestValue = similarityDic[sortedKeys[candidateRects.Length - 1]];
 
             var stdev = MyMath.GetStdev(similarityDic.Values.ToArray());
-            
+
             // 표준편차가 매우 작다는 이야기는, object가 없음을 의미
             if (stdev < 5)
             {
-                retRect.X = FindAreaWidth / 2;
-                retRect.Y = FindAreaHeight / 2;
-                retRect.Width = CvtModelImage.Width;
-                retRect.Height = CvtModelImage.Height;
+                retResult = new TrackResult(0, 0, 0, 0, false);
                 Console.WriteLine("타깃없음");
             }
             else
             {
-                retRect = candidateRects[sortedKeys[0]];
+                retResult = new TrackResult(candidateRects[sortedKeys[0]], true);
+                Console.WriteLine("x = {0}, y = {1}, width = {2}, height = {3}", retResult.X, retResult.Y, retResult.Width, retResult.Height);
+
             }
 #if SHOW_LOG
             // 상위 10% 표시
@@ -238,7 +235,7 @@ namespace Tracker
             Console.WriteLine("표준편차 = {0}", stdev);
             Console.WriteLine("\n--------------");
 #endif
-            return retRect;
+            return retResult;
         }
 
         private void GenerateRandomRects(Random randomGenerator, Rect[] rects, int from)
@@ -255,16 +252,39 @@ namespace Tracker
 
         public class TrackResult : IDisposable
         {
+            public Rect Region
+            {
+                get
+                {
+                    return new Rect(X, Y, Width, Height);
+                }
+            }
             public int X { get; private set; }
             public int Y { get; private set; }
-            public int CenterY { get; }
-            public Mat Frame { get; private set; }
-            public TrackResult(int x, int y, Mat frame)
+
+            public int Width { get; private set; }
+            public int Height { get; private set; }
+
+            public bool IsObjectExist { get; private set; }
+
+            public TrackResult(int x, int y, int width, int height, bool bTrackedWell)
             {
-                Debug.Assert(x >= 0 && y >= 0 && frame != null);
+                Debug.Assert(x >= 0 && y >= 0);
                 X = x;
                 Y = y;
-                Frame = frame.Clone();
+                Width = width;
+                Height = height;
+                IsObjectExist = bTrackedWell;
+            }
+
+            public TrackResult(Rect rect, bool bTrackedWell)
+            {
+                X = rect.X;
+                Y = rect.Y;
+                Width = rect.Width;
+                Height = rect.Height;
+
+                IsObjectExist = bTrackedWell;
             }
 
             public void Dispose()
@@ -276,10 +296,11 @@ namespace Tracker
 
             private void ResetAllResources()
             {
-                Frame?.Release();
-                Frame = null;
                 X = 0;
                 Y = 0;
+                Width = 0;
+                Height = 0;
+                IsObjectExist = false;
             }
 
             ~TrackResult()

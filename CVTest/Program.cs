@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using OpenCvSharp;
 using Tracker;
 
@@ -12,7 +8,7 @@ namespace CVTest
     {
         public static Rangef[] hsColorRanges = { new Rangef(0, 180), new Rangef(0, 256) };
         public static Rangef[] hColorRanges = { new Rangef(0, 180) };
-        public static string roiName = "iphone.jpg";
+        public static string roiName = "iphone_home.jpg";
 
         static void Main(string[] args)
         {
@@ -34,8 +30,8 @@ namespace CVTest
 
             VideoCapture streamer = new VideoCapture(0);
             Rect meanShiftRect = new Rect();
-            meanShiftRect.X = 320;
-            meanShiftRect.Y = 240;
+            meanShiftRect.X = streamer.FrameWidth / 2;
+            meanShiftRect.Y = streamer.FrameHeight / 2;
 
             using (Window screen = new Window("screen"))
             using (Mat eachFrame = new Mat())
@@ -49,10 +45,21 @@ namespace CVTest
                     }
 
                     var trackResult = tracker.TrackUsing(eachFrame, 20, meanShiftRect.X, meanShiftRect.Y);
-                    meanShiftRect.X = trackResult.X;
-                    meanShiftRect.Y = trackResult.Y;
+                    if (trackResult.IsObjectExist == true)
+                    {
+                        Rect windowRect = trackResult.Region;
 
-                    screen.ShowImage(trackResult.Frame);
+                        Cv2.Rectangle(eachFrame, windowRect, 255, 3);
+
+                        meanShiftRect.X = trackResult.X;
+                        meanShiftRect.Y = trackResult.Y;
+                    }
+                    else
+                    {
+                        Console.WriteLine("없잖아");
+                    }
+
+                    screen.ShowImage(eachFrame);
 
                     var key = Cv2.WaitKey(100);
                     if (key == 27)
@@ -143,7 +150,8 @@ namespace CVTest
             tracker.SetModelImage(modelImage, channels, dims, binSizes, hsColorRanges);
             var result = tracker.TrackUsing(scanImage, 20, 320,240);
 
-            Cv2.ImShow("result", result.Frame);
+            
+            //Cv2.ImShow("result", result.Frame);
             Cv2.WaitKey(0);
 
         }
