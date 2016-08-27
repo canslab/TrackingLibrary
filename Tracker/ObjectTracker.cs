@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using OpenCvSharp;
 using System.Diagnostics;
 using System.Collections.Concurrent;
+using System.Threading;
 
 namespace Tracker
 {
@@ -151,12 +150,15 @@ namespace Tracker
                 var resultRect = ParallelMeanShift(currentFrame, meanShiftRects, backProjectMat);
                 Cv2.Rectangle(currentFrame, resultRect, new Scalar(255, 255, 0), 3);
 
-                result = new TrackResult(resultRect.X, resultRect.Y, backProjectMat.Clone());
+                result = new TrackResult(resultRect.X, resultRect.Y, currentFrame);
             }
 
             return result;
         }
 
+        /// <summary>
+        /// 트랙커를 reset한다.(내부 리소스 모드 해제 및 초기화)
+        /// </summary>
         public void ResetTrackerAndRelease()
         {
             InitPropertiesAndVariables();
@@ -183,21 +185,23 @@ namespace Tracker
             ModelHistogram = null;
         }
 
-        private Rect ParallelMeanShift(Mat currentFrame, Rect[] rects, Mat backProjectMat)
+        private Rect ParallelMeanShift(Mat currentFrame, Rect[] candidateRects, Mat backProjectMat)
         {
-            ConcurrentDictionary<int, double> similarityDic = new ConcurrentDictionary<int, double>(); 
+            ConcurrentDictionary<int, double> similarityDic = new ConcurrentDictionary<int, double>();
+            Rect retRect;
 
             // nThread(rect의 갯수)만큼 Parallel하게 mean shift 수행
-            Parallel.For(0, rects.Length, (index) =>
+            Parallel.For(0, candidateRects.Length, (index) =>
             {
-                Cv2.MeanShift(backProjectMat, ref rects[index], TermCriteria.Both(30, 1));
-                similarityDic[index] = Cv2.Mean(backProjectMat[rects[index]]).Val0;
+                Cv2.MeanShift(backProjectMat, ref candidateRects[index], TermCriteria.Both(30, 1));
+                similarityDic[index] = Cv2.Mean(backProjectMat[candidateRects[index]]).Val0;
 #if SHOW_LOG
                 lock (currentFrame)
                 {
-                    Cv2.Rectangle(currentFrame, rects[index], 255, 3);
+                    Cv2.Rectangle(currentFrame, candidateRects[index], 255, 3);
                 }
-                Console.WriteLine(Cv2.Mean(backProjectMat.SubMat(rects[index])));
+               
+                Console.WriteLine("tid = {0}, mean value = {1}", Thread.CurrentThread.ManagedThreadId, similarityDic[index]);
 #endif
             });
 
@@ -206,14 +210,35 @@ namespace Tracker
                               orderby similarityDic[number] descending
                               select number).ToArray();
 
+            var largestValue = similarityDic[sortedKeys[0]];
+            var smallestValue = similarityDic[sortedKeys[candidateRects.Length - 1]];
+
+            var stdev = MyMath.GetStdev(similarityDic.Values.ToArray());
+            
+            // 표준편차가 매우 작다는 이야기는, object가 없음을 의미
+            if (stdev < 5)
+            {
+                retRect.X = FindAreaWidth / 2;
+                retRect.Y = FindAreaHeight / 2;
+                retRect.Width = CvtModelImage.Width;
+                retRect.Height = CvtModelImage.Height;
+                Console.WriteLine("타깃없음");
+            }
+            else
+            {
+                retRect = candidateRects[sortedKeys[0]];
+            }
 #if SHOW_LOG
-            for(int i = 0; i <= rects.Length / 5; ++i)
+            // 상위 10% 표시
+            for(int i = 0; i <= candidateRects.Length / 5; ++i)
             {
                 Console.Write(similarityDic[sortedKeys[i]]+" ");
             }
+            Console.WriteLine("젤 큰놈 = {0}, 젤 작은 놈 = {1}", largestValue, smallestValue);
+            Console.WriteLine("표준편차 = {0}", stdev);
             Console.WriteLine("\n--------------");
 #endif
-            return rects[sortedKeys[0]];
+            return retRect;
         }
 
         private void GenerateRandomRects(Random randomGenerator, Rect[] rects, int from)
